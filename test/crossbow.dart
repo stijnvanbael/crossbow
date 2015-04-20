@@ -3,6 +3,7 @@ library crossbow.test;
 import 'package:unittest/unittest.dart';
 import 'package:crossbow/crossbow.dart';
 import 'package:reflective/reflective.dart';
+import 'package:box/box.dart';
 import 'dart:async';
 import 'dart:io';
 import 'dart:convert';
@@ -10,17 +11,14 @@ import 'dart:convert';
 main() {
   group('Core', () {
     Producer start;
-    Transformer route;
 
     setUp(() {
       start = new ProducerBase();
     });
 
     test('Simple pipe', () {
-      Message message = null;
       Transformer transformer = new PTransformer();
       start | transformer;
-      transformer.listeners.add((m) => message = m);
       transformer.start();
       start.produce(new Message(new Future.value('Hello world!'), (message) {
         Future future = message.body.then((body) => expect(body, 'Hepello world!'));
@@ -77,6 +75,18 @@ main() {
       expect(employee, new Employee('John', DateTime.parse('1970-01-01T00'), new Division('Marketing')));
     });
   });
+
+  group('DB', () {
+    test('Save', () async {
+      DB.configure(file: '.box/test');
+
+      Transformer transformer = DB.save;
+      transformer.consume(new Message(new Future.value(
+          new Employee('John', DateTime.parse('1970-01-01T00'), new Division('Marketing')))));
+      expect(await DB.box.find(Employee, 'John'), new Employee('John', DateTime.parse('1970-01-01T00'), new Division('Marketing')));
+    });
+
+  });
 }
 
 class PTransformer extends Transformer {
@@ -125,6 +135,7 @@ postAndExpect(Transformer pipeline, String url, String body, String expected) {
 }
 
 class Employee {
+  @key
   String name;
   DateTime dateOfBirth;
   Division division;

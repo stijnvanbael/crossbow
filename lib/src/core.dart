@@ -31,7 +31,7 @@ abstract class Producer {
 class ProducerBase implements Producer {
   final List listeners = [];
   final defaultListener = (Message message) {
-    message.callback(message);
+    if(message.callback != null) message.callback(message);
   };
 
   ProducerBase() {
