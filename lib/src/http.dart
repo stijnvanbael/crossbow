@@ -103,7 +103,7 @@ class HttpProducer extends Http {
       });
     }, new HttpHeaders({
         'request' : request,
-        'pathParams' : pathParameters(request)
+        'pathParams' : producer.pathParameters(request)
     })));
   }
 
