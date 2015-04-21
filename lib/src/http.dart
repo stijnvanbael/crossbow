@@ -1,20 +1,22 @@
 part of crossbow;
 
 abstract class Http extends ProducerBase {
-  static HttpProducer get(String path, {int port: 8080}) {
-    return new HttpProducer(HttpMethod.GET, path);
+  static int defaultPort = 8080;
+
+  static HttpProducer get(String path, {int port}) {
+    return new HttpProducer(HttpMethod.GET, path, port);
   }
 
-  static HttpProducer put(String path, {int port: 8080}) {
-    return new HttpProducer(HttpMethod.PUT, path);
+  static HttpProducer put(String path, {int port}) {
+    return new HttpProducer(HttpMethod.PUT, path, port);
   }
 
-  static HttpProducer post(String path, {int port: 8080}) {
-    return new HttpProducer(HttpMethod.POST, path);
+  static HttpProducer post(String path, {int port}) {
+    return new HttpProducer(HttpMethod.POST, path, port);
   }
 
-  static HttpProducer delete(String path, {int port: 8080}) {
-    return new HttpProducer(HttpMethod.DELETE, path);
+  static HttpProducer delete(String path, {int port}) {
+    return new HttpProducer(HttpMethod.DELETE, path, port);
   }
 }
 
@@ -53,11 +55,13 @@ class HttpProducer extends Http {
   final HttpMethod method;
   final RegExp path;
   final List<String> parameters;
-  final int port = 8080;
+  int port;
 
-  HttpProducer(this.method, String path) :
+  HttpProducer(this.method, String path, int port) :
   path = new RegExp('^' + path.replaceAll(PATH_PARAMETER, '([^/]+)') + '\$'),
   parameters = new List.from(PATH_PARAMETER.allMatches(path).map((match) => match.group(1))) {
+    if(port == null) port = Http.defaultPort;
+    this.port = port;
     PRODUCERS.putIfAbsent(port, () => new Set());
     PRODUCERS[port].add(this);
   }
