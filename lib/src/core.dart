@@ -1,6 +1,6 @@
 part of crossbow;
 
-typedef mapper(Map<String, dynamic> headers, body);
+typedef Mapper(Map<String, dynamic> headers, body);
 
 class Message {
   Future body;
@@ -8,6 +8,10 @@ class Message {
   Map<String, dynamic> headers;
 
   Message([this.body, this.callback, this.headers = const {}]);
+
+  void doCallback() {
+    if(callback != null) callback(this);
+  }
 }
 
 abstract class Consumer {
@@ -19,7 +23,7 @@ abstract class Producer {
 
   Transformer operator |(Transformer transformer);
 
-  Transformer map(mapper m);
+  Transformer map(Mapper m);
 
   Producer start();
 
@@ -30,16 +34,14 @@ abstract class Producer {
 
 class ProducerBase implements Producer {
   final List listeners = [];
-  final defaultListener = (Message message) {
-    if(message.callback != null) message.callback(message);
-  };
+  final defaultListener = (message) => message.doCallback();
 
   ProducerBase() {
     listeners.add(defaultListener);
   }
 
   // TODO: change signature to (Map headers, body)
-  Transformer map(mapper m) {
+  Transformer map(Mapper m) {
     return pipe(new FunctionTransformer(m));
   }
 
@@ -71,8 +73,8 @@ class ProducerBase implements Producer {
 abstract class Transformer extends ProducerBase implements Consumer {
   Producer upstream;
 
-  void consume(Message message) {
-    new Future(() => produce(transformMessage(message)));
+  Future consume(Message message) {
+    return new Future(() => produce(transformMessage(message)));
   }
 
   Message transformMessage(Message message);
@@ -89,7 +91,7 @@ abstract class Transformer extends ProducerBase implements Consumer {
 }
 
 class FunctionTransformer extends Transformer {
-  mapper m;
+  Mapper m;
 
   FunctionTransformer(this.m);
 

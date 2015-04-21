@@ -1,10 +1,10 @@
 part of crossbow;
 
-typedef where(QueryStep step);
+typedef Future Where(QueryStep step, Message message);
 
 abstract class DB extends Transformer {
-  static query(Type type, where(QueryStep)) {
-
+  static query(Type type, Where where) {
+    return new Query(type, where);
   }
 
   static final Save _save = new Save();
@@ -22,6 +22,17 @@ abstract class DB extends Transformer {
 class Save extends DB {
   Message transformMessage(Message message) {
     message.body.then((entity) => DB.box.store(entity));
+    return message;
+  }
+}
+
+class Query extends DB {
+  Type type;
+  Where where;
+  Query(this.type, this.where);
+
+  Message transformMessage(Message message) {
+    message.body = new Future(() => where(DB.box.query(type), message));
     return message;
   }
 }

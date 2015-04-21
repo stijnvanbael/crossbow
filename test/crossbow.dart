@@ -78,14 +78,42 @@ main() {
 
   group('DB', () {
     test('Save', () async {
+      File file = new File('.box/test/crossbow.test.Employee');
+      if (file.existsSync()) {
+        file.deleteSync();
+      }
       DB.configure(file: '.box/test');
-
       Transformer transformer = DB.save;
-      transformer.consume(new Message(new Future.value(
-          new Employee('John', DateTime.parse('1970-01-01T00'), new Division('Marketing')))));
+      var saved = false;
+      Message message = new Message(new Future.value(new Employee('John', DateTime.parse('1970-01-01T00'), new Division('Marketing'))),
+        (message) => saved = true);
+      await transformer.consume(message);
+      await Future.doWhile(() => !saved);
       expect(await DB.box.find(Employee, 'John'), new Employee('John', DateTime.parse('1970-01-01T00'), new Division('Marketing')));
     });
+    test('Query', () async {
+      File file = new File('.box/test/crossbow.test.Employee');
+      if (file.existsSync()) {
+        file.deleteSync();
+      }
+      DB.configure(file: '.box/test');
+      DB.box.store(new Employee('John', DateTime.parse('1970-01-01T00'), new Division('Marketing')));
+      DB.box.store(new Employee('Margaret', DateTime.parse('1975-08-23T00'), new Division('Marketing')));
+      DB.box.store(new Employee('Daniel', DateTime.parse('1979-10-16T00'), new Division('Marketing')));
+      DB.box.store(new Employee('Emma', DateTime.parse('1982-04-05T00'), new Division('Administration')));
 
+      Transformer transformer = DB.query(Employee, (select, message) =>
+        select.where('division.name').equals(message.headers['division'])
+          .orderBy('name').ascending()
+          .list());
+      var results;
+      await transformer.consume(new Message(new Future.value(null), (message) => results = message.body, {'division': 'Marketing'}));
+      expect(await results, [
+        new Employee('Daniel', DateTime.parse('1979-10-16T00'), new Division('Marketing')),
+        new Employee('John', DateTime.parse('1970-01-01T00'), new Division('Marketing')),
+        new Employee('Margaret', DateTime.parse('1975-08-23T00'), new Division('Marketing'))
+      ]);
+    });
   });
 }
 
@@ -140,7 +168,7 @@ class Employee {
   DateTime dateOfBirth;
   Division division;
   bool retired = false;
-  @transient String ignoreMe = "Ignore me";
+  @transient String ignoreMe = 'Ignore me';
 
   Employee([this.name, this.dateOfBirth, this.division]);
 
