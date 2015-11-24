@@ -1,4 +1,8 @@
-part of crossbow;
+import 'dart:async';
+import 'dart:io';
+import 'dart:convert';
+import 'dart:collection';
+import 'core.dart';
 
 abstract class Http extends ProducerBase {
   static int defaultPort = 8080;

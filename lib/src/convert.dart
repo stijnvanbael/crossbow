@@ -1,4 +1,6 @@
-part of crossbow;
+import 'dart:io';
+import 'package:reflective/reflective.dart';
+import 'core.dart';
 
 abstract class Convert<F, T> extends Transformer {
   static ConvertObjectToJson toJson() {

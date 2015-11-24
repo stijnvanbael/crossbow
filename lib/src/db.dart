@@ -1,4 +1,6 @@
-part of crossbow;
+import 'dart:async';
+import 'package:box/box.dart';
+import 'core.dart';
 
 typedef Future Where(QueryStep step, Message message);
 

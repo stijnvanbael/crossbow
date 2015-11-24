@@ -1,4 +1,4 @@
-part of crossbow;
+import 'dart:async';
 
 typedef Mapper(Map<String, dynamic> headers, body);
 
@@ -80,12 +80,12 @@ abstract class Transformer extends ProducerBase implements Consumer {
   Message transformMessage(Message message);
 
   Transformer start() {
-    upstream.start();
+    upstream?.start();
     return this;
   }
 
   Transformer stop() {
-    upstream.stop();
+    upstream?.stop();
     return this;
   }
 }
