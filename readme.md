@@ -13,15 +13,17 @@ Crossbow principles:
 
 Example:
 
-    HttpServer.get('/user/{username}/trips/{date}')
-        .select(from: Trip,
-            where: (headers, body) =>
-                path('user.username').equalTo(headers.path('username')
-                    .and(path('date').equalTo(headers.path('date')))
-        .convert(to: Json)
-        .join(by: (headers, body) => headers['request'],
-            as: JsonArray)
-        .start();
+    (
+        Http.get('/user/{username}/trips')
+        | DB.select(from: [Trip, User], 
+                    where: (query, message) =>
+                        query.where('user.username').equals(message.headers.path('username'))
+                            .orderBy('date').descending()
+                            .list())
+        | Convert.toJson()
+        | Stream.join(by: (headers, body) => headers['request'],
+                as: JsonArray)
+    ).start();
 
 The example above will accept HTTP connections on port 8080 on the specified URL with placeholders 'username' and 'date'. It will
 then perform a query for the type Trip using the path parameters. The results of the query will be streamed and

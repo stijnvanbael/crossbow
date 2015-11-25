@@ -102,8 +102,8 @@ main() {
       DB.box.store(new Employee('Daniel', DateTime.parse('1979-10-16T00'), new Division('Marketing')));
       DB.box.store(new Employee('Emma', DateTime.parse('1982-04-05T00'), new Division('Administration')));
 
-      Transformer transformer = DB.query(Employee, (select, message) =>
-        select.where('division.name').equals(message.headers['division'])
+      Transformer transformer = DB.select(from: Employee, where: (query, message) =>
+        query.where('division.name').equals(message.headers['division'])
           .orderBy('name').ascending()
           .list());
       var results;

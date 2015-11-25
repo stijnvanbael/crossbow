@@ -5,8 +5,8 @@ import 'core.dart';
 typedef Future Where(QueryStep step, Message message);
 
 abstract class DB extends Transformer {
-  static query(Type type, Where where) {
-    return new Query(type, where);
+  static select({Type from, Where where}) {
+    return new Query(from, where);
   }
 
   static final Save _save = new Save();
@@ -16,7 +16,7 @@ abstract class DB extends Transformer {
   static Box box;
 
   static configure({String file}) {
-    if(file != null) box = new FileBox(file);
+    if (file != null) box = new FileBox(file);
   }
 
 }
@@ -31,6 +31,7 @@ class Save extends DB {
 class Query extends DB {
   Type type;
   Where where;
+
   Query(this.type, this.where);
 
   Message transformMessage(Message message) {
