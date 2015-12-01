@@ -1,6 +1,8 @@
 Dart Crossbow
 =============
 
+[![Build Status](https://drone.io/github.com/stijnvanbael/crossbow/status.png)](https://drone.io/github.com/stijnvanbael/crossbow/latest)
+
 Crossbow is a library for building applications as a series of pipelines.
 
 Crossbow principles:
