@@ -1,21 +1,37 @@
 import 'dart:async';
 
-typedef Mapper(Map<String, dynamic> headers, body);
+typedef dynamic Mapper(Map<String, dynamic> headers, dynamic body);
 
 class Message {
-  Future body;
+  var body;
   var callback;
   Map<String, dynamic> headers;
+  Future<Message> completed;
 
-  Message([this.body, this.callback, this.headers = const {}]);
+  Completer<Message> _completer = new Completer();
+
+  Message(this.body, {this.callback, this.headers: const {}}) {
+    _completer = new Completer();
+    completed = _completer.future;
+  }
 
   void doCallback() {
-    if(callback != null) callback(this);
+    if (callback != null) callback(this);
+    _completer.complete(this);
+  }
+
+  Message cloneWithBody(dynamic newBody) {
+    Message message = new Message(newBody, callback: callback, headers: new Map.from(headers));
+    message._completer = _completer;
+    message.completed = completed;
+    _completer = new Completer();
+    completed = _completer.future;
+    return message;
   }
 }
 
 abstract class Consumer {
-  void consume(Message message);
+  Future consume(Message message);
 }
 
 abstract class Producer {
@@ -40,7 +56,6 @@ class ProducerBase implements Producer {
     listeners.add(defaultListener);
   }
 
-  // TODO: change signature to (Map headers, body)
   Transformer map(Mapper m) {
     return pipe(new FunctionTransformer(m));
   }
@@ -74,18 +89,20 @@ abstract class Transformer extends ProducerBase implements Consumer {
   Producer upstream;
 
   Future consume(Message message) {
-    return new Future(() => produce(transformMessage(message)));
+    return transformMessage(message).listen(produce).asFuture();
   }
 
-  Message transformMessage(Message message);
+  Stream<Message> transformMessage(Message message);
 
   Transformer start() {
-    upstream?.start();
+    if (upstream != null)
+      upstream.start();
     return this;
   }
 
   Transformer stop() {
-    upstream?.stop();
+    if (upstream != null)
+      upstream.stop();
     return this;
   }
 }
@@ -95,9 +112,9 @@ class FunctionTransformer extends Transformer {
 
   FunctionTransformer(this.m);
 
-  Message transformMessage(Message message) {
-    message.body = message.body.then((body) => m(message.headers, body));
-    return message;
+  Stream<Message> transformMessage(Message message) {
+    var newBody = m(message.headers, message.body);
+    return new Stream.fromIterable([message.cloneWithBody(newBody)]);
   }
 
 }

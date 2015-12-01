@@ -1,7 +1,8 @@
 import 'dart:async';
-import 'dart:io';
-import 'dart:convert';
 import 'dart:collection';
+import 'dart:convert';
+import 'dart:io';
+
 import 'core.dart';
 
 abstract class Http extends ProducerBase {
@@ -61,10 +62,13 @@ class HttpProducer extends Http {
   final List<String> parameters;
   int port;
 
-  HttpProducer(this.method, String path, int port) :
-  path = new RegExp('^' + path.replaceAll(PATH_PARAMETER, '([^/]+)') + '\$'),
-  parameters = new List.from(PATH_PARAMETER.allMatches(path).map((match) => match.group(1))) {
-    if(port == null) port = Http.defaultPort;
+  HttpProducer(this.method, String path, [int port])
+      :
+        path = new RegExp(
+            '^' + path.replaceAll(PATH_PARAMETER, '([^/]+)') + '\$'),
+        parameters = new List.from(
+            PATH_PARAMETER.allMatches(path).map((match) => match.group(1))) {
+    if (port == null) port = Http.defaultPort;
     this.port = port;
     PRODUCERS.putIfAbsent(port, () => new Set());
     PRODUCERS[port].add(this);
@@ -77,7 +81,7 @@ class HttpProducer extends Http {
 
   HttpProducer stop() {
     PRODUCERS[port].remove(this);
-    if(PRODUCERS[port].isEmpty) {
+    if (PRODUCERS[port].isEmpty) {
       SERVERS[port].then((server) {
         server.close();
       });
@@ -96,19 +100,20 @@ class HttpProducer extends Http {
   void dispatch(HttpRequest request) {
     request.response.headers.contentType = ContentType.HTML;
     HttpProducer producer = PRODUCERS[port]
-    .firstWhere((producer) => producer.canHandle(request), orElse: () => NOT_FOUND);
-    Future body = request.transform(UTF8.decoder)
-    .toList()
-    .then((List list) => list.isNotEmpty ? list[0] : null);
-    producer.produce(new Message(body, (Message message) {
-      message.body.then((value) {
-        request.response.write(value);
+        .firstWhere((producer) => producer.canHandle(request),
+        orElse: () => NOT_FOUND);
+    request.transform(UTF8.decoder)
+        .toList()
+        .then((List list) {
+      var body = list.isNotEmpty ? list[0] : null;
+      producer.produce(new Message(body, callback: (message) {
+        request.response.write(message.body);
         request.response.close();
-      });
-    }, new HttpHeaders({
+      }, headers: new HttpHeaders({
         'request' : request,
         'pathParams' : producer.pathParameters(request)
-    })));
+      })));
+    });
   }
 
   Map<String, String> pathParameters(HttpRequest request) {
@@ -118,8 +123,8 @@ class HttpProducer extends Http {
       };
     }
     return new Map.fromIterable(parameters,
-    key: (parameter) => parameter,
-    value: (parameter) => match.group(parameters.indexOf(parameter) + 1));
+        key: (parameter) => parameter,
+        value: (parameter) => match.group(parameters.indexOf(parameter) + 1));
   }
 
   bool canHandle(HttpRequest request) {

@@ -21,7 +21,7 @@ Example:
                     .orderBy('trip.date').descending()
                     .list())
         | Convert.toJson()
-        | Stream.join(by: (headers, body) => headers['request'],
+        | Results.join(by: (headers, body) => headers['request'],
                 as: JsonArray)
     ).start();
 

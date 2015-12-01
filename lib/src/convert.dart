@@ -1,5 +1,8 @@
+import 'dart:async';
 import 'dart:io';
+
 import 'package:reflective/reflective.dart';
+
 import 'core.dart';
 
 abstract class Convert<F, T> extends Transformer {
@@ -13,22 +16,25 @@ abstract class Convert<F, T> extends Transformer {
     return new ConvertJsonToObject(type);
   }
 
-  Message transformMessage(Message message) {
-    message.body = message.body.then((value) => convert(value));
-    return message;
+  Stream<Message> transformMessage(Message message) {
+    return new Stream.fromIterable(
+        [ message.cloneWithBody(convert(message.body))]);
   }
 
   T convert(F from);
 }
 
 class ConvertObjectToJson extends Convert<Object, String> {
-  Message transformMessage(Message message) {
-    message.headers['request'].response.headers.contentType = ContentType.JSON;
-    return super.transformMessage(message);
+  Stream<Message> transformMessage(Message message) {
+    return super.transformMessage(message).map((message) =>
+    message.headers['request'].response.headers.contentType = ContentType.JSON);
   }
 
   String convert(object) {
-    return Conversion.convert(object).to(Json).value;
+    return Conversion
+        .convert(object)
+        .to(Json)
+        .value;
   }
 }
 
