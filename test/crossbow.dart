@@ -77,6 +77,20 @@ main() {
       expect(employee, new Employee(
           'John', DateTime.parse('1970-01-01T00'), new Division('Marketing')));
     });
+    test('YAML to Object', () {
+      ConvertYamlToObject transformer = Convert.yamlTo(Employee);
+      var yaml = r'''
+retired: false
+division:
+  name: Marketing
+dateOfBirth: 1970-01-01 00:00:00.000
+name: John
+''';
+      var employee = transformer.convert(yaml);
+      expect(employee, new Employee(
+          'John', DateTime.parse('1970-01-01T00'), new Division('Marketing')));
+
+    });
   });
 
   group('DB', () {

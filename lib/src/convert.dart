@@ -16,6 +16,11 @@ abstract class Convert<F, T> extends Transformer {
     return new ConvertJsonToObject(type);
   }
 
+  static ConvertYamlToObject yamlTo(Type type) {
+    installYamlConverters();
+    return new ConvertYamlToObject(type);
+  }
+
   Stream<Message> transformMessage(Message message) {
     return new Stream.fromIterable(
         [ message.cloneWithBody(convert(message.body))]);
@@ -46,7 +51,19 @@ class ConvertJsonToObject extends Convert<String, Object> {
   }
 
   Object convert(String json) {
-    return Conversion.convert(new Json(json)).to(type.type);
+    return Conversion.convert(new Json(json)).to(type.rawType);
+  }
+}
+
+class ConvertYamlToObject extends Convert<String, Object> {
+  TypeReflection type;
+
+  ConvertYamlToObject(Type type) {
+    this.type = new TypeReflection(type);
+  }
+
+  Object convert(String yaml) {
+    return Conversion.convert(new Yaml(yaml)).to(type.rawType);
   }
 }
 
